@@ -1,92 +1,90 @@
-__author__ = 'jarvis'
+ class QNode:
+	def __init__(self, n):
+		self.prev = None
+		self.next = None
+		self.pageNumber = n
 
-class QNode:
-    def __init__(self, num):
-        self.prev = None
-        self.next = None
-        self.pageNumber = num
 
 class Queue:
-    def __init__(self, num):
-        self.count = 0
-        self.front = None
-        self.rear = None
-        self.numberOfFrames = num
+	def __init__(self, num):
+		self.count = 0
+		self.numberOfFrames = num
+		self.front = None
+		self.rear = None
 
-class Hash:
-    def __init__(self, num):
-        self.capacity = num
-        self.array = dict()
 
-class LRU:
-    @staticmethod
-    def are_all_frames_full(q):
-        "returns a boolean value"
-        return q.count == q.numberOfFrames
+class LRUCache:
+	def __init__(self, num):
+		self.hashmap = dict()
+		self.q = Queue(num)
+	
+	def areAllFramesFull(self):
+		return self.q.count == self.q.numberOfFrames
 
-    @staticmethod
-    def is_queue_empty(q):
-        return q.rear == None
+	def isQueueEmpty(self):
+		return self.q.rear == None
 
-    def de_queue(self, q):
-        if self.is_queue_empty(q):
-            return
+	def deQueue(self):
+		if self.isQueueEmpty():
+			return
+		if self.q.front == self.q.rear:
+			self.q.front = None
+		temp = self.q.rear
+		self.q.rear = self.q.rear.prev
 
-        if q.front == q.rear:
-            q.front = None
-        temp = q.rear
-        q.rear = q.rear.prev
+		if self.q.rear is not None:
+			self.q.rear.next = None
 
-        if q.rear != None:
-            q.rear.next = None
+		self.q.count -= 1
 
-        q.count -= 1
+	def enQueue(self, num):
+		if self.areAllFramesFull():
+			self.hashmap[self.q.rear.pageNumber] = None
+			self.deQueue()
 
-    def enqueue(self, q, h, pnum):
-        if self.are_all_frames_full(q):
-            h.array[q.rear.pageNumber] = None
-            self.de_queue(q)
-            temp = QNode(pnum)
-            temp.next = q.front
+		temp = QNode(num)
+		temp.next = self.q.front
 
-            if self.is_queue_empty(q):
-                q.rear = q.front = temp
-            else:
-                q.front.prev = temp
-                q.front = temp
-            h.array[pnum] = temp
-            q.count += 1
+		if self.isQueueEmpty():
+			self.q.rear = self.q.front = temp
+		else:
+			self.q.front.prev = temp
+			self.q.front = temp
 
-    def referencePage(self, q, h, pnum):
-        reqPage = h.array.get(pnum, None)
+		self.hashmap[num ] = temp
+		self.q.count += 1
 
-        if reqPage == None:
-            self.enqueue(q, h, pnum)
-        elif reqPage != q.front:
-            reqPage.prev.next = reqPage.next
-            if reqPage.next != None:
-                reqPage.next.prev = reqPage.prev
+	def referencePage(self, num):
+		reqPage = self.hashmap.get(num, None)
 
-            if reqPage == q.rear:
-                q.rear = q.front
-                q.rear.next = None
+		if reqPage == None:
+			self.enQueue(num)
+		elif reqPage != self.q.front: 
+			reqPage.prev.next = reqPage.next
+			
+			if reqPage.next != None:
+				reqPage.next.prev = reqPage.prev
 
-            reqPage.next = q.front
-            reqPage.prev = None
-            reqPage.next.prev = reqPage
-            q.front = reqPage
+			if reqPage == self.q.rear:
+				self.q.rear = reqPage.prev
+				self.q.rear.next = None
 
-q = Queue(4)
-h = Hash(10)
-l = LRU()
-l.referencePage(q, h, 1)
-l.referencePage(q, h, 2)
-l.referencePage(q, h, 3)
-l.referencePage(q, h, 1)
-l.referencePage(q, h, 4)
-l.referencePage(q, h, 5)
+			reqPage.next = self.q.front
+			reqPage.prev = None
 
-"""print q.front.pageNumber
-print q.front.next.pageNumber
-print q.front.next.next.pageNumber
-print q.front.next.next.next.pageNumber"""
+			reqPage.next.prev = reqPage
+			self.q.front = reqPage
+	def printQueue(self):
+		temp = self.q.front
+		while temp != None:
+			print temp.pageNumber
+			temp = temp.next
+
+obj = LRUCache(4)
+obj.referencePage(1)
+obj.referencePage(2)
+obj.referencePage(3)
+obj.referencePage(1)
+obj.referencePage(4)
+obj.referencePage(5)
+obj.printQueue()
